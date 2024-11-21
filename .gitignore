@@ -1,0 +1,13 @@
+*
+!*/
+!*.c
+!*.md
+!*.h
+!makefile*
+!*.gitignore
+!*/*
+!*.java
+!*.html
+!*.js
+*.out
+back/node_modules/
