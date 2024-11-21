@@ -9,5 +9,6 @@
 !*.java
 !*.html
 !*.js
+!.env
 *.out
 back/node_modules/

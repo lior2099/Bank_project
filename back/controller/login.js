@@ -24,11 +24,18 @@ export const loginPost = async function( req , res) {
     const tokenAcc = jwt.sign({ email: body.email }, secretKeyACC, { expiresIn: '5m' })
     const tokenRef = jwt.sign({ email: body.email }, secretKeyREF, { expiresIn: '5h' })
 
-    return res
-    .cookie("access_token", tokenAcc ) 
+    res.cookie("access_token", tokenAcc ) 
     .cookie("Refresh_token" , tokenRef)
+
+    if (body.password == foundUser.password) {
+      return res    
     .status(200).json({"msg" : "log-in was ok" , "Token Access" : tokenAcc , "Token Refresh" : tokenRef});
-  
+    } else {
+      return res    
+    .status(401).json({"msg" : "log-in failed , bad password" });
+    }
+
+
   }
 }
 

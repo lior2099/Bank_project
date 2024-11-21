@@ -24,10 +24,10 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  "transactions": {
-    type: [mongoose.Schema.Types.ObjectId],
+  "transactions": [{
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Transaction',
-  },
+  }],
 } , {timestamps : true});
 
 const transactionSchema = new mongoose.Schema({
@@ -71,11 +71,11 @@ const TempSchema = new mongoose.Schema({
   },
   "passcode": {
     type: Number,
-    default : Math.floor(100000 + Math.random() * 900000),
+    default: () => Math.floor(100000 + Math.random() * 900000),
   },
   "expAt": {
     type: Date,
-    default : Date.now() + (5*100*1000),
+    default: () => Date.now() + (5*100*1000),
   },
   
 });
