@@ -1,31 +1,27 @@
-import { getHistory } from "../mock/historyMock.js";
+import { getHistory } from "../util/getHistoryTrans.js";
 import { User } from "../models/users.js";
-import jwt from "jsonwebtoken";
+
+import { getACCToken } from "../util/accToken.js";
 
 export const transactionHistory = async function (req, res) {
   const userId = req.user;
-  console.log(userId);
 
   try {
-    const fromUser = await User.findById(userId) 
-    .populate("transactions")
-    .exec();
+    const fromUser = await User.findById(userId)
+      .populate("transactions")
+      .exec();
     if (!fromUser) {
       return res.status(409).json({ msg: "user is not found" });
     }
 
-    console.log(fromUser);
+    const result = getHistory(fromUser);
+    const newToken = getACCToken(userId);
 
-    const result = getHistory(userId);
-    const secretKeyACC = process.env.JWT_SECRET_ACC;
-    const tokenAcc = jwt.sign({ email: userId }, secretKeyACC, {
-      expiresIn: "5m",
+    return res.status(201).json({
+      msg: "get History of Transaction ",
+      Transactions: result,
+      access_token: newToken,
     });
-    res.cookie("access_token", tokenAcc);
-
-    return res
-      .status(201)
-      .json({ msg: "get History of Transaction ", Transactions: result });
   } catch (Error) {
     return res.status(409).json({ msg: "fail to get History" });
   }

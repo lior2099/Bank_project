@@ -1,48 +1,34 @@
 import mongoose from "mongoose";
-import validator from "validator";
-import { User , Transaction } from "../models/users.js";
+import { User, Transaction } from "../models/users.js";
 
-export const transaction = async function (from, to , amount) {
-
-
-  const fromUser = await User.findOne({_id: from});
+export const transaction = async function (from, to, amount) {
+  const fromUser = await User.findOne({ _id: from });
   if (!fromUser) {
-    return { success: false  , "who" : [from]};
+    return { success: false, who: [from] };
   }
-  
-  const toUser = await User.findOne({_id: to});
+
+  const toUser = await User.findOne({ _id: to });
   if (!toUser) {
-    return { success: false  , "who" : [to]};
+    return { success: false, who: [to] };
   }
-  
-  if (fromUser.balance < amount){
-    console.log("sssss");
-    console.log(fromUser.balance);
+
+  if (fromUser.balance < amount) {
     const msg = "User don't have this amount have only " + fromUser.balance;
-    return { success: true, transaction: false, money: fromUser.balance  , msg};
+    return { success: true, transaction: false, money: fromUser.balance, msg };
   }
-
-
 
   const session = await mongoose.connection.startSession();
-
-  
 
   try {
     session.startTransaction();
 
-
-    // console.log(fromUser);
-
     const newTransaction = new Transaction({
-      from : from,
-      to : to,
-      money : amount
+      from: from,
+      to: to,
+      money: amount,
     });
 
-    // console.log(newTransaction);
-
-    await newTransaction.save({session});
+    await newTransaction.save({ session });
 
     fromUser.balance -= amount;
     fromUser.transactions.push(newTransaction._id);
@@ -56,8 +42,6 @@ export const transaction = async function (from, to , amount) {
     await session.commitTransaction();
     session.endSession();
 
-
-    
     return {
       success: true,
       transaction: true,
@@ -66,13 +50,10 @@ export const transaction = async function (from, to , amount) {
       new_balance: fromUser.balance,
       transactionId: newTransaction._id,
     };
-
-
   } catch (error) {
     console.log(error);
     await session.abortTransaction();
     session.endSession();
     return { success: false, error: error.message };
   }
-
 };

@@ -1,0 +1,9 @@
+/* src/App.css */
+.login-container button:hover {
+  background-color: #45a049;
+}
+
+.error {
+  color: red;
+  font-size: 14px;
+}

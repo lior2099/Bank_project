@@ -1,42 +1,30 @@
-import {validationResult} from 'express-validator'
-import jwt from 'jsonwebtoken'
-import { User } from "../models/users.js";
+import { validationResult } from "express-validator";
+import { getACCToken } from "../util/accToken.js";
+import { getREFToken } from "../util/RefToken.js";
+import { getUser } from "../util/getExistsUser.js";
 
-
-export const loginPost = async function( req , res) {
-  const secretKeyACC = process.env.JWT_SECRET_ACC;
-  const secretKeyREF = process.env.JWT_SECRET_REF;
-
-  const errors = validationResult(req)
+export const loginPost = async function (req, res) {
+  const errors = validationResult(req);
   if (errors.isEmpty()) {
     const body = req.body;
 
+    const foundUser = await getUser(body.email, res);
 
-    const foundUser = await User.findOne({
-      _id: body.email,
-    });
     if (!foundUser) {
-      return res.status(409).json({
-        msg: "A user is not found!!",
-      });
+      return res.status(401).json({ msg: "log-in failed , bad email" });
     }
-    
-    const tokenAcc = jwt.sign({ email: body.email }, secretKeyACC, { expiresIn: '5m' })
-    const tokenRef = jwt.sign({ email: body.email }, secretKeyREF, { expiresIn: '5h' })
 
-    res.cookie("access_token", tokenAcc ) 
-    .cookie("Refresh_token" , tokenRef)
+    const tokenAcc = await getACCToken(body.email);
+    const tokenRef = await getREFToken(body.email);
 
     if (body.password == foundUser.password) {
-      return res    
-    .status(200).json({"msg" : "log-in was ok" , "Token Access" : tokenAcc , "Token Refresh" : tokenRef});
+      return res.status(200).json({
+        msg: "log-in was ok",
+        "Access_Token": tokenAcc,
+        "Refresh_Token": tokenRef,
+      });
     } else {
-      return res    
-    .status(401).json({"msg" : "log-in failed , bad password" });
+      return res.status(401).json({ msg: "log-in failed , bad password" });
     }
-
-
   }
-}
-
-
+};

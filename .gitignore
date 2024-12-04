@@ -9,6 +9,9 @@
 !*.java
 !*.html
 !*.js
-!.env
 *.out
 back/node_modules/
+back/.env
+.gitignore
+front/.env
+front/.gitignore

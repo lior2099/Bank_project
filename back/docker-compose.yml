@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    container_name: bank-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/bank?replicaSet=rs0  # MongoDB service name inside Docker
+    depends_on:
+      - mongo
+    networks:
+      - bank-network
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - bank-network
+
+volumes:
+  mongo-data:
+
+networks:
+  bank-network:
+    driver: bridge

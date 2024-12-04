@@ -1,0 +1,16 @@
+# Node.js dependencies
+node_modules
+
+# Logs
+*.log
+logs
+
+*.tmp
+temp
+.DS_Store
+
+docker-compose.override.yml
+
+.vscode
+.idea
+*.iml
