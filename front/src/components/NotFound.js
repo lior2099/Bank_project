@@ -2,17 +2,44 @@ import React from "react";
 import { Box, Typography, Container, Button } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
-import "./Home.css";
+import pageNotFoundImage from '../pics/pageNotFound.jpeg';
 
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   return (
-    <div className="login-container">
-      <div className="background-image">
+    <div style={{ 
+      width: '100vw', 
+      height: '100vh', 
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      <div style={{
+        backgroundImage: `url(${pageNotFoundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        paddingTop: '20px'
+      }}>
         <Container maxWidth="xs">
-          <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Box 
+            sx={{ 
+              textAlign: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              padding: 4,
+              borderRadius: 2,
+              boxShadow: 1,
+              marginTop: 4
+            }}
+          >
             <Typography variant="h3" sx={{ mb: 2 }}>
               404 Page Not Found
             </Typography>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Box, Typography, TextField, Container, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, InputAdornment, Switch } from '@mui/material';
+import { Button, Box, Typography, TextField, Container, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, InputAdornment } from '@mui/material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,9 +14,9 @@ import {
 import EmailIcon from '@mui/icons-material/Email';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import AddIcCallIcon from '@mui/icons-material/AddIcCall';
-import KeyIcon from '@mui/icons-material/Key';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import validator from 'validator';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -29,11 +29,13 @@ const Register = () => {
     confirmPassword: ''
   });
   const [errorMessage, setErrorMessage] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [openVerification, setOpenVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,63 +49,67 @@ const Register = () => {
       ...prevState,
       [name]: newValue
     }));
+
+    // Clear the error for the field being edited
+    setFieldErrors(prevErrors => ({
+      ...prevErrors,
+      [name]: ''
+    }));
   };
 
   const handleRegister = async (event) => {
     event.preventDefault();
     setErrorMessage(null);
+    setFieldErrors({});
 
-    // Validate all required fields
-    const requiredError = validateRequiredFields(formData);
-    if (requiredError) {
-      setErrorMessage(requiredError);
-      return;
+    let hasErrors = false;
+    const newErrors = {};
+
+    // Email validation
+    if (!validator.isEmail(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+      hasErrors = true;
     }
 
-    // Validate individual fields
+    // First name validation
     const firstNameError = validateName(formData.first_name, 'First name');
     if (firstNameError) {
-      setErrorMessage(firstNameError);
-      return;
+      newErrors.first_name = firstNameError;
+      hasErrors = true;
     }
 
+    // Last name validation
     const lastNameError = validateName(formData.last_name, 'Last name');
     if (lastNameError) {
-      setErrorMessage(lastNameError);
-      return;
+      newErrors.last_name = lastNameError;
+      hasErrors = true;
     }
 
-    const emailError = validateEmail(formData.email);
-    if (emailError) {
-      setErrorMessage(emailError);
-      return;
-    }
-
+    // Password validation
     const passwordError = validatePassword(formData.password);
     if (passwordError) {
-      setErrorMessage(passwordError);
-      return;
+      newErrors.password = passwordError;
+      hasErrors = true;
     }
 
+    // Confirm password validation
     const passwordMatchError = validatePasswordMatch(formData.password, formData.confirmPassword);
     if (passwordMatchError) {
-      setErrorMessage(passwordMatchError);
-      return;
+      newErrors.confirmPassword = passwordMatchError;
+      hasErrors = true;
     }
 
+    // Phone validation
     const phoneError = validatePhoneNumber(formData.phone_number);
     if (phoneError) {
-      setErrorMessage(phoneError);
-      return;
+      newErrors.phone_number = phoneError;
+      hasErrors = true;
     }
 
-    const handleClickShowPassword = () => {
-      setShowPassword(!showPassword);
-    };  
-
-    const handleClickShowConfirmPassword = () => {
-      setShowConfirmPassword(!showConfirmPassword);
-    };
+    if (hasErrors) {
+      setFieldErrors(newErrors);
+      return;
+    }
 
     try {
       const response = await axios.post('http://localhost:3000/sign-up', {
@@ -122,21 +128,13 @@ const Register = () => {
         setErrorMessage(null);
       }
     } catch (error) {
-      if (error.response) {
-        switch (error.response.status) {
-          case 409:
-            setErrorMessage('User already exists');
-            break;
-          case 500:
-            setErrorMessage('Server error, please try again later');
-            break;
-          default:
-            setErrorMessage(error.response.data.message || 'Registration failed');
-        }
-      } else if (error.request) {
-        setErrorMessage('No response from server. Please check your connection.');
+      if (error.response && error.response.status === 409) {
+        setFieldErrors(prevErrors => ({ 
+          ...prevErrors, 
+          email: 'User with this email already exists' 
+        }));
       } else {
-        setErrorMessage('An error occurred. Please try again.');
+        setErrorMessage(error.response?.data?.message || 'Registration failed');
       }
       console.error('Registration error:', error);
     }
@@ -169,6 +167,53 @@ const Register = () => {
         setErrorMessage('An error occurred during verification');
       }
     }
+  };
+
+  const handleResendCode = async () => {
+    const sendRequest = async () => {
+      try {
+        const response = await axios.post('http://localhost:3000/sign-up/re-send', {
+          email: userEmail
+        });
+        if (response.status === 201) {
+          setErrorMessage(null);
+          setSuccessMessage('Verification code resent successfully');
+        }
+      } catch (error) {
+        if (error.response?.status === 401) {
+          // Try to refresh token
+          try {
+            const refreshToken = localStorage.getItem('Refresh_Token');
+            const refreshResponse = await axios.post('http://localhost:3000/refresh-token', {
+              refreshToken
+            });
+            
+            // Update tokens
+            localStorage.setItem('Access_Token', refreshResponse.data.Access_Token);
+            localStorage.setItem('Refresh_Token', refreshResponse.data.Refresh_Token);
+            
+            // Retry the original request
+            const retryResponse = await axios.post('http://localhost:3000/sign-up/re-send', {
+              email: userEmail
+            });
+            if (retryResponse.status === 201) {
+              setErrorMessage(null);
+              setSuccessMessage('Verification code resent successfully');
+            }
+          } catch (refreshError) {
+            setSuccessMessage(null);
+            setErrorMessage('Session expired. Please try registering again.');
+            setOpenVerification(false);
+            navigate('/register');
+          }
+        } else {
+          setSuccessMessage(null);
+          setErrorMessage('Failed to resend verification code. Please try again.');
+        }
+      }
+    };
+
+    await sendRequest();
   };
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
@@ -206,15 +251,16 @@ const Register = () => {
                 fullWidth
                 margin="normal"
                 name="email"
-                type="email"
+                type="text"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                helperText="Required field"
+                error={!!fieldErrors.email}
+                helperText={fieldErrors.email || 'Required field'}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailIcon color="action" />
+                      <EmailIcon color={fieldErrors.email ? "error" : "action"} />
                     </InputAdornment>
                   ),
                 }}
@@ -228,7 +274,8 @@ const Register = () => {
                 value={formData.first_name}
                 onChange={handleChange}
                 required
-                helperText="Required field, must start with a capital letter"
+                helperText={fieldErrors.first_name || 'Required field, must start with a capital letter'}
+                error={!!fieldErrors.first_name}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -246,7 +293,8 @@ const Register = () => {
                 value={formData.last_name}
                 onChange={handleChange}
                 required
-                helperText="Required field, must start with a capital letter"
+                helperText={fieldErrors.last_name || 'Required field, must start with a capital letter'}
+                error={!!fieldErrors.last_name}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -264,7 +312,8 @@ const Register = () => {
                 value={formData.phone_number}
                 onChange={handleChange}
                 required
-                helperText="Required field (10 digits)"
+                helperText={fieldErrors.phone_number || 'Required field (10 digits)'}
+                error={!!fieldErrors.phone_number}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -284,7 +333,8 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                helperText="Required field (minimum 8 characters)"
+                helperText={fieldErrors.password || 'Required field (minimum 8 characters)'}
+                error={!!fieldErrors.password}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -309,7 +359,8 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                helperText="Required field"
+                helperText={fieldErrors.confirmPassword || 'Required field'}
+                error={!!fieldErrors.confirmPassword}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -360,15 +411,24 @@ const Register = () => {
           <Typography sx={{ mb: 2 }}>
             Please enter the 6-digit verification code sent to {userEmail}
           </Typography>
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
+          {successMessage && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {successMessage}
+            </Alert>
+          )}
           <TextField
             label="Verification Code"
             variant="outlined"
             fullWidth
             value={verificationCode}
             onChange={(e) => {
-              if (errorMessage) {
-                setErrorMessage(null);
-              }
+              setErrorMessage(null);
+              setSuccessMessage(null);
               
               const value = e.target.value.replace(/[^\d]/g, '');
               if (value.length <= 6) {
@@ -384,6 +444,14 @@ const Register = () => {
             helperText={errorMessage}
             autoFocus
           />
+          <Button
+            onClick={handleResendCode}
+            color="primary"
+            sx={{ mt: 2 }}
+            disabled={!!errorMessage}
+          >
+            Resend Verification Code
+          </Button>
         </DialogContent>
         <DialogActions>
           <Button 

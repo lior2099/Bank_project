@@ -10,9 +10,6 @@ export const sendMail = async (email, tempUser) => {
       },
     });
 
-
-    console.log(tempUser.email);
-
     let mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,

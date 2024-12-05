@@ -1,5 +1,5 @@
 import { validationResult } from "express-validator";
-import { getTempUser } from "../util/getTempUser.js";
+import { getTempUserByPasscode } from "../util/getTempUserByPasscode.js";
 import { createUser } from "../util/makeUser.js";
 
 export const confirmationPost = async function (req, res) {
@@ -7,7 +7,7 @@ export const confirmationPost = async function (req, res) {
   if (errors.isEmpty()) {
     const body = req.body;
 
-    const foundUser = await getTempUser(body.passcode , res);
+    const foundUser = await getTempUserByPasscode(body.passcode , res);
     if (!foundUser) {
       return res.status(400).json({
         msg: "Incorrect passcode, try again",

@@ -35,7 +35,6 @@ export const tokenREFValidator = (req, res, next) => {
     req.user = decoded.email; 
     next(); 
   } catch (err) {
-    console.log(err);
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ msg: 'Token has expired' });
     }

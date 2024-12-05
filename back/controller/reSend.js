@@ -7,16 +7,16 @@ import { sendMail } from "../util/sendMail.js";
 export const reSend = async function (req, res) {
   const userId = req.body.email;
 
-  isUserExists(userId);
-
-  let existingTempUser = getTempUser(userId);
+  let existingTempUser = await getTempUser(userId);
   if (!existingTempUser) {
     return res.status(409).json({
       msg: "too much time was pass need to sign-up again",
     });
   }
+  
 
-  updateTemp(existingTempUser);
+
+  await updateTemp(existingTempUser);
 
   try {
     await existingTempUser.save();
@@ -24,7 +24,7 @@ export const reSend = async function (req, res) {
     return res.status(500).json({ msg: "Error on the DB" });
   }
 
-  if (sendMail(existingTempUser)) {
+  if (sendMail(userId,existingTempUser)) {
     return res.status(201).json({
       msg: "send activate code to your mail",
     });

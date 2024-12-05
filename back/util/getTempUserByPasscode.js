@@ -1,8 +1,8 @@
 import { TempUser } from "../models/users.js";
 
-export const getTempUser = async (email) => {
+export const getTempUserByPasscode = async (passcode) => {
   const foundUser = await TempUser.findOne({
-    _id: email,
+    passcode: passcode,
   });
   if (!foundUser) {
     return null;
