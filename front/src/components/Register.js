@@ -3,12 +3,10 @@ import { Button, Box, Typography, TextField, Container, Alert, Dialog, DialogTit
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import {
-  validateEmail,
   validateName,
   validatePassword,
   validatePasswordMatch,
   validatePhoneNumber,
-  validateRequiredFields,
   capitalizeFirstLetter
 } from '../utils/validations.js';
 import EmailIcon from '@mui/icons-material/Email';

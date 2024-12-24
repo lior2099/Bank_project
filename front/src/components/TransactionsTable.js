@@ -67,6 +67,9 @@ const TransactionsTable = ({ transactions }) => {
         rows={rows}
         columns={columns}
         initialState={{
+          sorting: {
+            sortModel: [{ field: 'date', sort: 'desc' }],
+          },
           pagination: {
             paginationModel: { page: 0, pageSize: 10 },
           },
