@@ -1,18 +1,28 @@
+# Ignore everything
 *
+
+# But don't ignore directories
 !*/
+
+# Don't ignore certain file types
 !*.c
 !*.md
 !*.h
 !makefile*
 !*.gitignore
-!*/*
 !*.java
 !*.html
 !*.js
+
+# Ignore compiled output
 *.out
+
+# Ignore node_modules and .env files in the back and front directories
 back/node_modules/
+front/node_modules/
 back/.env
-.gitignore
 front/.env
-front/.gitignore
-back/.env
+
+# Keep the gitignore file itself
+.gitignore
+
